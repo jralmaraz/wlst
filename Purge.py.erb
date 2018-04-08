@@ -1,0 +1,32 @@
+from javax.management.openmbean import CompositeDataSupport
+
+connect('<%= @wlsuser %>','<%= @wlspassword %>','<%= @soaserverurl %>')
+
+custom()
+
+PurgeConfigobj = ObjectName('oracle.soa.config:name=purge,type=AutoPurgeJobConfig,Application=soa-infra')
+
+purgeJobDet =  mbs.getAttribute(PurgeConfigobj,'PurgeJobDetails')
+print '# of purge entries: ' + str(len(purgeJobDet))
+cntPurge=0;
+
+for retentionRule in purgeJobDet:
+   print retentionRule.get('jobName') + ', retention period: ' + str(retentionRule.get('retentionPeriod'))
+   if retentionRule.get('jobName') == '<%= @jobName %>':
+      # 'delete_instances_auto_job1':
+      print 'Entry ' + retentionRule.get('jobName') + ' has to be changed'
+      keys = retentionRule.getCompositeType().keySet().toArray()
+      keyitems = [ key for key in keys ]
+      values = retentionRule.getAll(keyitems)
+      cnt=0;
+      for key in keys:
+         if key == 'retentionPeriod':
+            values[cnt] = <%= @retentionPeriod %>
+            print '*** bpel: set ' + key + ' to value ' + str(values[cnt])
+            updatedRetentionRule = CompositeDataSupport(retentionRule.getCompositeType(), keyitems, values)
+            purgeJobDet[cntPurge] = updatedRetentionRule
+            SOAattribute = Attribute('PurgeJobDetails', purgeJobDet)
+            mbs.setAttribute(PurgeConfigobj, SOAattribute)
+            break
+         cnt = cnt + 1;
+   cntPurge = cntPurge + 1
