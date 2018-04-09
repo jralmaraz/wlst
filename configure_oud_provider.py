@@ -2,7 +2,7 @@
 import os, sys
  
 adminUser="weblogic"
-adminPassword="password"
+adminPassword=""
 adminServerHost="adminserver.host.com"
 adminServerPort="7001"
 domainName="YourDomainName"
